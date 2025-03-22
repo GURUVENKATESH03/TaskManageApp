@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Management Application</title>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <header>
+      <h2>Welcome to my Task Management Application</h2>
+    </header>
+
+    <div class="MainContainer">
+      <div class="nav__lists">
+        <button
+          type="button"
+          onclick="showAddTaskForm()"
+          class="nav__link active-link"
+        >
+          Add
+        </button>
+        <button
+          type="button"
+          onclick="showEditText()"
+          class="nav__link active-link"
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          onclick="showViewTask()"
+          class="nav__link active-link"
+        >
+          View Task
+        </button>
+        <button
+          type="button"
+          onclick="showDeleteTasks()"
+          class="nav__link active-link"
+        >
+          Delete
+        </button>
+      </div>
+
+      <div class="ContainerToView"></div>
+    </div>
+
+    <footer></footer>
+
+    <!-- <script> -->
+    <script>
+      // Global arrays to store tasks
+      let completedTasks = [];
+      let pendingTasks = [];
+
+      // Function to show the "Add Task" form
+      function showAddTaskForm() {
+        const container = document.querySelector(".ContainerToView");
+        container.innerHTML = ""; // Clear the container
+
+        const newDiv = document.createElement("div");
+        newDiv.classList.add("task-form");
+
+        const inputField = document.createElement("input");
+        inputField.type = "text";
+        inputField.placeholder = "Enter your task here";
+        inputField.classList.add("task-input");
+
+        const addButton = document.createElement("button");
+        addButton.textContent = "Add Task";
+        addButton.classList.add("add-task-button");
+
+        const taskList = document.createElement("ul");
+        taskList.classList.add("task-list");
+
+        newDiv.appendChild(inputField);
+        newDiv.appendChild(addButton);
+        newDiv.appendChild(taskList);
+
+        container.appendChild(newDiv);
+
+        // Display tasks only from pendingTasks array
+        displayPendingTasks(taskList);
+
+        addButton.addEventListener("click", function () {
+          const taskText = inputField.value.trim();
+
+          if (taskText !== "") {
+            // Create a new task and add it to the pendingTasks array by default
+            const task = {
+              text: taskText,
+              isCompleted: false,
+            };
+
+            pendingTasks.push(task);
+
+            // Create the new task item with a checkbox
+            const newTask = document.createElement("li");
+            newTask.textContent = taskText;
+
+            const checkBox = document.createElement("input");
+            checkBox.type = "checkbox";
+            checkBox.classList.add("task-checkbox");
+
+            newTask.appendChild(checkBox);
+            taskList.appendChild(newTask);
+
+            // Clear the input field
+            inputField.value = "";
+
+            // Handle checkbox change event
+            checkBox.addEventListener("change", function () {
+              if (checkBox.checked) {
+                // Move task to completedTasks
+                task.isCompleted = true;
+                completedTasks.push(task);
+                // Remove from pendingTasks
+                pendingTasks = pendingTasks.filter((t) => t !== task);
+                newTask.style.display = "none"; // Hide the task from the Add Task list
+              } else {
+                // Move task back to pendingTasks
+                task.isCompleted = false;
+                pendingTasks.push(task);
+                completedTasks = completedTasks.filter((t) => t !== task);
+                newTask.style.display = "block"; // Show the task again
+              }
+            });
+          } else {
+            alert("Please enter a task before adding.");
+          }
+        });
+      }
+
+      // Function to display only pending tasks in the Add Task form
+      function displayPendingTasks(taskList) {
+        pendingTasks.forEach((task) => {
+          const taskItem = document.createElement("li");
+          taskItem.textContent = task.text;
+
+          const checkBox = document.createElement("input");
+          checkBox.type = "checkbox";
+          checkBox.classList.add("task-checkbox");
+
+          taskItem.appendChild(checkBox);
+          taskList.appendChild(taskItem);
+
+          // Handle checkbox change event
+          checkBox.addEventListener("change", function () {
+            if (checkBox.checked) {
+              // Move task to completedTasks
+              task.isCompleted = true;
+              completedTasks.push(task);
+              // Remove from pendingTasks
+              pendingTasks = pendingTasks.filter((t) => t !== task);
+              taskItem.style.display = "none"; // Hide the task from the Add Task list
+            } else {
+              // Move task back to pendingTasks
+              task.isCompleted = false;
+              pendingTasks.push(task);
+              completedTasks = completedTasks.filter((t) => t !== task);
+              taskItem.style.display = "block"; // Show the task again
+            }
+          });
+        });
+      }
+
+      // Function to show tasks and allow editing
+      function showEditText() {
+        const container = document.querySelector(".ContainerToView");
+        container.innerHTML = ""; // Clear the container
+
+        const taskDisplayDiv = document.createElement("div");
+        taskDisplayDiv.classList.add("task-display");
+
+        const taskList = document.createElement("ul");
+        taskList.classList.add("task-list");
+
+        if (pendingTasks.length === 0 && completedTasks.length === 0) {
+          taskDisplayDiv.innerHTML = "<p>No tasks available to edit.</p>";
+        } else {
+          const allTasks = [...pendingTasks, ...completedTasks];
+          allTasks.forEach((task, index) => {
+            const taskItem = document.createElement("li");
+            taskItem.classList.add("task-item");
+
+            const taskText = document.createElement("span");
+            taskText.textContent = task.text;
+            taskText.classList.add("task-text");
+
+            const editButton = document.createElement("button");
+            editButton.textContent = "Edit";
+            editButton.classList.add("edit-button");
+
+            taskItem.appendChild(taskText);
+            taskItem.appendChild(editButton);
+            taskList.appendChild(taskItem);
+
+            editButton.addEventListener("click", () => {
+              showTaskEditForm(index, taskText);
+            });
+          });
+          taskDisplayDiv.appendChild(taskList);
+        }
+
+        container.appendChild(taskDisplayDiv);
+      }
+
+      // Function to show the task edit form
+      function showTaskEditForm(taskIndex, currentText) {
+        const container = document.querySelector(".ContainerToView");
+        container.innerHTML = ""; // Clear the container
+
+        const editFormDiv = document.createElement("div");
+        editFormDiv.classList.add("edit-form");
+
+        const inputField = document.createElement("input");
+        inputField.type = "text";
+        inputField.value = currentText.textContent; // Pre-fill with current task text
+        inputField.classList.add("edit-input");
+
+        const submitButton = document.createElement("button");
+        submitButton.textContent = "Submit";
+        submitButton.classList.add("submit-button");
+
+        editFormDiv.appendChild(inputField);
+        editFormDiv.appendChild(submitButton);
+
+        container.appendChild(editFormDiv);
+
+        submitButton.addEventListener("click", () => {
+          const updatedText = inputField.value.trim();
+
+          if (updatedText !== "") {
+            const allTasks = [...pendingTasks, ...completedTasks];
+            allTasks[taskIndex].text = updatedText; // Update the task text
+            showEditText(); // Refresh the list of tasks
+          } else {
+            alert("Task text cannot be empty.");
+          }
+        });
+      }
+
+      // Function to show tasks (viewing tasks) with filter for completed and pending
+      // Function to show tasks (viewing tasks) with filter for completed and pending
+      function showViewTask() {
+        const container = document.querySelector(".ContainerToView");
+        container.innerHTML = ""; // Clear the container
+
+        const taskDisplayDiv = document.createElement("div");
+        taskDisplayDiv.classList.add("task-display");
+
+        const taskList = document.createElement("ul");
+        taskList.classList.add("task-list");
+
+        // Create filter dropdown for completed and pending tasks
+        const filterSelect = document.createElement("select");
+        filterSelect.classList.add("filter-status");
+        const allOption = document.createElement("option");
+        allOption.value = "all";
+        allOption.textContent = "All Tasks";
+        const completedOption = document.createElement("option");
+        completedOption.value = "completed";
+        completedOption.textContent = "Completed";
+        const pendingOption = document.createElement("option");
+        pendingOption.value = "pending";
+        pendingOption.textContent = "Pending";
+
+        filterSelect.appendChild(allOption);
+        filterSelect.appendChild(completedOption);
+        filterSelect.appendChild(pendingOption);
+
+        taskDisplayDiv.appendChild(filterSelect);
+
+        filterSelect.addEventListener("change", (e) => {
+          const filterValue = e.target.value;
+
+          // Clear the task list before rendering filtered tasks
+          taskList.innerHTML = "";
+
+          let filteredTasks;
+          if (filterValue === "completed") {
+            filteredTasks = completedTasks;
+          } else if (filterValue === "pending") {
+            filteredTasks = pendingTasks;
+          } else {
+            // For 'all' option, show pending tasks first and then completed tasks
+            filteredTasks = [...pendingTasks, ...completedTasks];
+          }
+
+          // Loop through filtered tasks and display them
+          filteredTasks.forEach((task) => {
+            const taskItem = document.createElement("li");
+            taskItem.textContent = task.text; // Display task text
+            taskList.appendChild(taskItem); // Append task to the list
+          });
+        });
+
+        // Append the task list
+        taskDisplayDiv.appendChild(taskList);
+        container.appendChild(taskDisplayDiv);
+      }
+
+      // Initialize the app when the page loads
+      document.addEventListener("DOMContentLoaded", function () {
+        // Initialize other parts of the page here if needed
+      });
+    </script>
+
+    <!-- 
+    </script> -->
+  </body>
+</html>
