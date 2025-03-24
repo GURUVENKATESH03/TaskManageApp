@@ -108,14 +108,19 @@ h2 {
 
 .task-item {
     display: flex;
-    justify-content: space-between;
+    justify-self: center;
     align-items: center;
-    background-color: #f9f9f9;
-    margin-bottom: 12px;
-    padding: 12px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s;
+    justify-content: space-between;
+    width: 300%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    margin: 5px 0;
+    border-radius: 5px;
+    background-color: white;
+}
+
+.task-checkbox {
+    margin-right: 10px;
 }
 
 .task-item:hover {
@@ -123,11 +128,9 @@ h2 {
 }
 
 .task-text {
-    font-size: 1rem;
-    color: #333;
-    word-wrap: break-word;
+    flex-grow: 1; /* Take available space between checkbox and delete button */
+    font-weight: bold;
 }
-
 .edit-button {
     background-color: #4285F4;
     color: white;
@@ -192,19 +195,16 @@ h2 {
     color: #999;
 }
 .delete-button {
-    background-color: #FF4747;  /* Red color for delete */
+    background-color: red;
     color: white;
-    padding: 6px 12px;
-    font-size: 0.9rem;
     border: none;
-    border-radius: 5px;
+    padding: 5px 10px;
     cursor: pointer;
-    transition: background-color 0.3s;
-    margin-left: 10px;  /* Adds space between task text and button */
+    border-radius: 3px;
 }
 
 .delete-button:hover {
-    background-color: #D33F3F;  /* Darker red on hover */
+    background-color: darkred;
 }
 
 
