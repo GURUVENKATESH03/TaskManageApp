@@ -34,13 +34,7 @@
         >
           View Task
         </button>
-        <button
-          type="button"
-          onclick="showDeleteTasks()"
-          class="nav__link active-link"
-        >
-          Delete
-        </button>
+        
       </div>
 
       <div class="ContainerToView"></div>
@@ -48,11 +42,19 @@
 
     <footer></footer>
 
-    <!-- <script> -->
     <script>
-      // Global arrays to store tasks
-      let completedTasks = [];
-      let pendingTasks = [];
+      // Functions to handle localStorage tasks
+
+      // Retrieve tasks from localStorage
+      function getTasks() {
+        const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        return tasks;
+      }
+
+      // Save tasks to localStorage
+      function saveTasks(tasks) {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+      }
 
       // Function to show the "Add Task" form
       function showAddTaskForm() {
@@ -80,92 +82,92 @@
 
         container.appendChild(newDiv);
 
-        // Display tasks only from pendingTasks array
-        displayPendingTasks(taskList);
+        // Display tasks from localStorage
+        displayTasks(taskList);
 
         addButton.addEventListener("click", function () {
           const taskText = inputField.value.trim();
 
           if (taskText !== "") {
-            // Create a new task and add it to the pendingTasks array by default
+            const tasks = getTasks();
             const task = {
               text: taskText,
               isCompleted: false,
             };
 
-            pendingTasks.push(task);
+            tasks.push(task);
+            saveTasks(tasks);
 
-            // Create the new task item with a checkbox
-            const newTask = document.createElement("li");
-            newTask.textContent = taskText;
-
-            const checkBox = document.createElement("input");
-            checkBox.type = "checkbox";
-            checkBox.classList.add("task-checkbox");
-
-            newTask.appendChild(checkBox);
-            taskList.appendChild(newTask);
-
-            // Clear the input field
-            inputField.value = "";
-
-            // Handle checkbox change event
-            checkBox.addEventListener("change", function () {
-              if (checkBox.checked) {
-                // Move task to completedTasks
-                task.isCompleted = true;
-                completedTasks.push(task);
-                // Remove from pendingTasks
-                pendingTasks = pendingTasks.filter((t) => t !== task);
-                newTask.style.display = "none"; // Hide the task from the Add Task list
-              } else {
-                // Move task back to pendingTasks
-                task.isCompleted = false;
-                pendingTasks.push(task);
-                completedTasks = completedTasks.filter((t) => t !== task);
-                newTask.style.display = "block"; // Show the task again
-              }
-            });
+            inputField.value = ""; // Clear input
+            displayTasks(taskList); // Re-render tasks
           } else {
             alert("Please enter a task before adding.");
           }
         });
       }
 
-      // Function to display only pending tasks in the Add Task form
-      function displayPendingTasks(taskList) {
-        pendingTasks.forEach((task) => {
-          const taskItem = document.createElement("li");
-          taskItem.textContent = task.text;
-
-          const checkBox = document.createElement("input");
-          checkBox.type = "checkbox";
-          checkBox.classList.add("task-checkbox");
-
-          taskItem.appendChild(checkBox);
-          taskList.appendChild(taskItem);
-
-          // Handle checkbox change event
-          checkBox.addEventListener("change", function () {
-            if (checkBox.checked) {
-              // Move task to completedTasks
-              task.isCompleted = true;
-              completedTasks.push(task);
-              // Remove from pendingTasks
-              pendingTasks = pendingTasks.filter((t) => t !== task);
-              taskItem.style.display = "none"; // Hide the task from the Add Task list
-            } else {
-              // Move task back to pendingTasks
-              task.isCompleted = false;
-              pendingTasks.push(task);
-              completedTasks = completedTasks.filter((t) => t !== task);
-              taskItem.style.display = "block"; // Show the task again
+      // Function to display tasks (both completed and pending)
+      function displayTasks(taskList) {
+        taskList.innerHTML = ''; // Clear the list before rendering
+    
+        const tasks = getTasks();
+        
+        if (tasks.length === 0) {
+            taskList.style.display = "none"; // Hide task list if empty
+            return;
+        } else {
+            taskList.style.display = "block"; // Show task list if tasks exist
+        }
+    
+        tasks.forEach((task, index) => {
+            const taskItem = document.createElement("li");
+            taskItem.classList.add("task-item");
+    
+            // Create checkbox
+            const checkBox = document.createElement("input");
+            checkBox.type = "checkbox";
+            checkBox.classList.add("task-checkbox");
+    
+            // Create task text
+            const taskText = document.createElement("span");
+            taskText.textContent = task.text;
+            taskText.classList.add("task-text");
+    
+            // Create delete button
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Delete";
+            deleteButton.classList.add("delete-button");
+    
+            // Align items properly
+            taskItem.appendChild(checkBox); // Checkbox on the left
+            taskItem.appendChild(taskText); // Task text beside it
+            taskItem.appendChild(deleteButton); // Delete button at the right
+    
+            taskList.appendChild(taskItem);
+    
+            // Mark completed tasks
+            if (task.isCompleted) {
+                checkBox.checked = true;
+                taskItem.style.backgroundColor = "#D4EDDA"; // Green background for completed tasks
             }
-          });
+    
+            // Handle checkbox change event
+            checkBox.addEventListener("change", function () {
+                task.isCompleted = checkBox.checked;
+                saveTasks(tasks);
+                displayTasks(taskList); // Re-render the task list
+            });
+    
+            // Handle delete task
+            deleteButton.addEventListener("click", function () {
+                const updatedTasks = tasks.filter((_, idx) => idx !== index);
+                saveTasks(updatedTasks);
+                displayTasks(taskList); // Re-render the task list
+            });
         });
       }
 
-      // Function to show tasks and allow editing
+      // Function to show tasks for editing
       function showEditText() {
         const container = document.querySelector(".ContainerToView");
         container.innerHTML = ""; // Clear the container
@@ -176,33 +178,42 @@
         const taskList = document.createElement("ul");
         taskList.classList.add("task-list");
 
-        if (pendingTasks.length === 0 && completedTasks.length === 0) {
-          taskDisplayDiv.innerHTML = "<p>No tasks available to edit.</p>";
-        } else {
-          const allTasks = [...pendingTasks, ...completedTasks];
-          allTasks.forEach((task, index) => {
-            const taskItem = document.createElement("li");
-            taskItem.classList.add("task-item");
+        const tasks = getTasks();
+        tasks.forEach((task, index) => {
+          const taskItem = document.createElement("li");
+          taskItem.classList.add("task-item");
 
-            const taskText = document.createElement("span");
-            taskText.textContent = task.text;
-            taskText.classList.add("task-text");
+          const taskText = document.createElement("span");
+          taskText.textContent = task.text;
+          taskText.classList.add("task-text");
 
-            const editButton = document.createElement("button");
-            editButton.textContent = "Edit";
-            editButton.classList.add("edit-button");
+          const editButton = document.createElement("button");
+          editButton.textContent = "Edit";
+          editButton.classList.add("edit-button");
 
-            taskItem.appendChild(taskText);
-            taskItem.appendChild(editButton);
-            taskList.appendChild(taskItem);
+          const deleteButton = document.createElement("button");
+          deleteButton.textContent = "Delete";
+          deleteButton.classList.add("delete-button");
 
-            editButton.addEventListener("click", () => {
-              showTaskEditForm(index, taskText);
-            });
+          taskItem.appendChild(taskText);
+          taskItem.appendChild(editButton);
+          taskItem.appendChild(deleteButton);
+          taskList.appendChild(taskItem);
+
+          // Edit button functionality
+          editButton.addEventListener("click", () => {
+            showTaskEditForm(index, taskText);
           });
-          taskDisplayDiv.appendChild(taskList);
-        }
 
+          // Delete button functionality
+          deleteButton.addEventListener("click", () => {
+            const updatedTasks = tasks.filter((t, idx) => idx !== index);
+            saveTasks(updatedTasks);
+            showEditText(); // Refresh the task list
+          });
+        });
+
+        taskDisplayDiv.appendChild(taskList);
         container.appendChild(taskDisplayDiv);
       }
 
@@ -216,7 +227,7 @@
 
         const inputField = document.createElement("input");
         inputField.type = "text";
-        inputField.value = currentText.textContent; // Pre-fill with current task text
+        inputField.value = currentText.textContent;
         inputField.classList.add("edit-input");
 
         const submitButton = document.createElement("button");
@@ -230,18 +241,17 @@
 
         submitButton.addEventListener("click", () => {
           const updatedText = inputField.value.trim();
-
           if (updatedText !== "") {
-            const allTasks = [...pendingTasks, ...completedTasks];
-            allTasks[taskIndex].text = updatedText; // Update the task text
-            showEditText(); // Refresh the list of tasks
+            const tasks = getTasks();
+            tasks[taskIndex].text = updatedText;
+            saveTasks(tasks);
+            showEditText(); // Refresh the task list
           } else {
             alert("Task text cannot be empty.");
           }
         });
       }
 
-      // Function to show tasks (viewing tasks) with filter for completed and pending
       // Function to show tasks (viewing tasks) with filter for completed and pending
       function showViewTask() {
         const container = document.querySelector(".ContainerToView");
@@ -274,40 +284,39 @@
 
         filterSelect.addEventListener("change", (e) => {
           const filterValue = e.target.value;
-
-          // Clear the task list before rendering filtered tasks
-          taskList.innerHTML = "";
+          const tasks = getTasks();
+          taskList.innerHTML = ""; // Clear the list before filtering
 
           let filteredTasks;
           if (filterValue === "completed") {
-            filteredTasks = completedTasks;
+            filteredTasks = tasks.filter(task => task.isCompleted);
           } else if (filterValue === "pending") {
-            filteredTasks = pendingTasks;
+            filteredTasks = tasks.filter(task => !task.isCompleted);
           } else {
-            // For 'all' option, show pending tasks first and then completed tasks
-            filteredTasks = [...pendingTasks, ...completedTasks];
+            filteredTasks = tasks;
           }
 
-          // Loop through filtered tasks and display them
-          filteredTasks.forEach((task) => {
+          filteredTasks.forEach((task, index) => {
             const taskItem = document.createElement("li");
-            taskItem.textContent = task.text; // Display task text
-            taskList.appendChild(taskItem); // Append task to the list
+            taskItem.classList.add("task-item");
+
+            const taskText = document.createElement("span");
+            taskText.textContent = task.text;
+            taskText.classList.add("task-text");
+
+            taskItem.appendChild(taskText);
+            taskList.appendChild(taskItem);
           });
         });
 
-        // Append the task list
         taskDisplayDiv.appendChild(taskList);
         container.appendChild(taskDisplayDiv);
       }
 
       // Initialize the app when the page loads
       document.addEventListener("DOMContentLoaded", function () {
-        // Initialize other parts of the page here if needed
+        showAddTaskForm(); // Start by showing the Add Task form
       });
     </script>
-
-    <!-- 
-    </script> -->
   </body>
 </html>
